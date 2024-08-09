@@ -37,6 +37,7 @@ class MainActivity : AppCompatActivity() {
     private val ids = mutableListOf<Int>()
     private val titles = mutableListOf<String>()
     private val dates = mutableListOf<String>()
+    private val notes = mutableListOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +77,37 @@ class MainActivity : AppCompatActivity() {
         getAndAddNotes()
 
         val db = Database(this, null)
-        myAdapter = MyAdapter(ids,titles, dates) { position ->
+
+        myAdapter = MyAdapter(ids, titles, dates, notes, { position ->
+            val currentNote = notes[position]
+
+
+            // Create an AlertDialog to edit the note
+            val alert = AlertDialog.Builder(this)
+            alert.setTitle("Edit Note")
+
+            val input = EditText(this)
+            input.setText(currentNote)
+            alert.setView(input)
+
+            alert.setPositiveButton("Save") { dialog, which ->
+                val updatedNote = input.text.toString()
+
+                // Update the note in the database
+                db.updateNoteById(ids[position],extractTitle(updatedNote) , updatedNote)
+
+                // Update the note in the RecyclerView
+                notes[position] = updatedNote
+                titles[position] = extractTitle(updatedNote)  // Update the title if necessary
+                myAdapter.notifyItemChanged(position)
+
+                Toast.makeText(this, "Note updated", Toast.LENGTH_SHORT).show()
+            }
+
+            alert.setNegativeButton("Cancel", null)
+            alert.show()
+
+        }, { position ->
             // Long press detected, confirm deletion
             val posToDelete = position
 
@@ -95,7 +126,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 setNegativeButton("No", null)
             }.create().show()
-        }
+        })
 
 
         recyclerView.adapter = myAdapter
@@ -116,23 +147,16 @@ class MainActivity : AppCompatActivity() {
 
             alert.setPositiveButton("Save") { dialog, which ->
                 val userInput = input.text.toString()
-                val sp=userInput.split(" ").filter { it.isNotEmpty() }
 
-                val title = when {
-                    sp.size >= 3 -> sp[0] + " " + sp[1] + " " + sp[2]
-                    sp.size == 2 -> sp[0] + " " + sp[1]
-                    sp.isNotEmpty() -> sp[0]
-                    else -> "No title"
-                }
 
 
                 val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
 
                 val date =formattedDate.toString()
 
-                db.addNote(id,title,date,userInput)
+                db.addNote(id, title.toString(),date,userInput)
 
-                myAdapter.addItem(id,title,date)
+                myAdapter.addItem(id, title.toString(),date,userInput)
                 recyclerView.scrollToPosition(titles.size - 1)
 
 
@@ -149,6 +173,7 @@ class MainActivity : AppCompatActivity() {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
+
     fun getAndAddNotes(){
         val db = Database(this, null)
         val cursor = db.getName()
@@ -161,8 +186,20 @@ class MainActivity : AppCompatActivity() {
                 ids.add(id)
                 titles.add(title)
                 dates.add(date)
+                notes.add(note)
             }
             it.close()
         }
+    }
+    fun extractTitle(userInput: String): String {
+        val sp=userInput.split(" ").filter { it.isNotEmpty() }
+
+        val title = when {
+            sp.size >= 3 -> sp[0] + " " + sp[1] + " " + sp[2]
+            sp.size == 2 -> sp[0] + " " + sp[1]
+            sp.isNotEmpty() -> sp[0]
+            else -> "No title"
+        }
+        return title
     }
 }

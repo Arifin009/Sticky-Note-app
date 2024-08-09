@@ -3,6 +3,7 @@ package com.example.yourapp
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stickynotes.R
@@ -11,7 +12,10 @@ class MyAdapter(
     private val ids: MutableList<Int>,
     private val titles: MutableList<String>,
     private val subtitles: MutableList<String>,
-    private val onItemLongClick: (Int) -> Unit
+    private val notes: MutableList<String>,
+    private val onItemClick: (Int) -> Unit,
+    private val onItemLongClick: (Int) -> Unit,
+
 ) : RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
 
     inner class MyViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -19,11 +23,18 @@ class MyAdapter(
         val subtitleTextView: TextView = itemView.findViewById(R.id.itemDate)
 
         init {
+
+            // Set a one-click listener on the itemView
+            itemView.setOnClickListener {
+                onItemClick(adapterPosition)
+            }
             // Set a long-click listener on the itemView
             itemView.setOnLongClickListener {
                 onItemLongClick(adapterPosition)
                 true
             }
+
+
         }
     }
 
@@ -43,10 +54,11 @@ class MyAdapter(
     }
 
     // Method to add new items to the list
-    fun addItem(id:Int,title: String, subtitle: String) {
+    fun addItem(id:Int,title: String, subtitle: String,note:String) {
         ids.add(id)
         titles.add(title)
         subtitles.add(subtitle)
+        notes.add(note)
         notifyItemInserted(titles.size - 1)
     }
     fun removeItem(position: Int) {
@@ -54,6 +66,7 @@ class MyAdapter(
         ids.removeAt(position)
         titles.removeAt(position)
         subtitles.removeAt(position)
+        notes.removeAt(position)
         notifyItemRemoved(position)
     }
 

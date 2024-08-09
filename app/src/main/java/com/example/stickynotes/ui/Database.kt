@@ -62,6 +62,14 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db.delete(TABLE_NAME, "id = ?", arrayOf(id.toString()))
         db.close()
     }
+    fun updateNoteById(id: Int, title: String, note: String) {
+        val db = this.writableDatabase
+        val values = ContentValues().apply {
+            put("title", title)
+            put("note", note)
+        }
+        db.update("notes", values, "id = ?", arrayOf(id.toString()))
+    }
 
 
 
