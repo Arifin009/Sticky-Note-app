@@ -27,13 +27,6 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="?attr/actionBarSize"
-        android:padding="16dp"
-        app:layoutManager="LinearLayoutManager"/>
 
     <include layout="@layout/content_main" />
 

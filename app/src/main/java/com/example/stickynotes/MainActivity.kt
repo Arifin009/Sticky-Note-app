@@ -1,9 +1,11 @@
 package com.example.stickynotes
 
 import Database
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.snackbar.Snackbar
@@ -31,8 +33,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var myAdapter: MyAdapter
     private lateinit var fab: FloatingActionButton
-    private var selectedPosition: Int = -1
+
     private val ids = mutableListOf<Int>()
+    private val titles = mutableListOf<String>()
+    private val dates = mutableListOf<String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -62,28 +67,15 @@ class MainActivity : AppCompatActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
 
-        val titles = mutableListOf<String>()
-        val dates = mutableListOf<String>()
 
-        // Add  data
-        val db = Database(this, null)
-        val cursor = db.getName()
+
+
+
 
         // Extract data from cursor
-        cursor?.let {
-            while (it.moveToNext()) {
-                val id = it.getInt(it.getColumnIndexOrThrow("id"))
-                val title = it.getString(it.getColumnIndexOrThrow("title"))
-                val date = it.getString(it.getColumnIndexOrThrow("date"))
-                val note = it.getString(it.getColumnIndexOrThrow("note"))
-                ids.add(id)
-                titles.add(title)
-                dates.add(date)
-            }
-            it.close()
-        }
+        getAndAddNotes()
 
-
+        val db = Database(this, null)
         myAdapter = MyAdapter(ids,titles, dates) { position ->
             // Long press detected, confirm deletion
             val posToDelete = position
@@ -117,17 +109,36 @@ class MainActivity : AppCompatActivity() {
 
 
         fab.setOnClickListener {
+            val alert =  AlertDialog.Builder(this);
+            alert.setTitle("Edit")
+            val input = EditText(this)
+            alert.setView(input)
 
-            val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
-            val title = "Bad Time"
-            val date =formattedDate.toString()
-            val note="This the bad time for me, one day you will be also realise" +
-                    " that how I was love you in that time you will find me very " +
-                    "badly and miss me very deeply but it will be the wrong moment "
-            db.addNote(id,title,date,note)
+            alert.setPositiveButton("Save") { dialog, which ->
+                val userInput = input.text.toString()
+                val sp=userInput.split(" ").filter { it.isNotEmpty() }
 
-            myAdapter.addItem(id,title,date)
-            recyclerView.scrollToPosition(titles.size - 1)
+                val title = when {
+                    sp.size >= 3 -> sp[0] + " " + sp[1] + " " + sp[2]
+                    sp.size == 2 -> sp[0] + " " + sp[1]
+                    sp.isNotEmpty() -> sp[0]
+                    else -> "No title"
+                }
+
+
+                val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
+
+                val date =formattedDate.toString()
+
+                db.addNote(id,title,date,userInput)
+
+                myAdapter.addItem(id,title,date)
+                recyclerView.scrollToPosition(titles.size - 1)
+
+
+            }
+            alert.show()
+
         }
     }
 
@@ -137,5 +148,21 @@ class MainActivity : AppCompatActivity() {
     override fun onSupportNavigateUp(): Boolean {
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
+    }
+    fun getAndAddNotes(){
+        val db = Database(this, null)
+        val cursor = db.getName()
+        cursor?.let {
+            while (it.moveToNext()) {
+                val id = it.getInt(it.getColumnIndexOrThrow("id"))
+                val title = it.getString(it.getColumnIndexOrThrow("title"))
+                val date = it.getString(it.getColumnIndexOrThrow("date"))
+                val note = it.getString(it.getColumnIndexOrThrow("note"))
+                ids.add(id)
+                titles.add(title)
+                dates.add(date)
+            }
+            it.close()
+        }
     }
 }
