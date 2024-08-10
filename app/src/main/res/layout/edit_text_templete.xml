@@ -1,0 +1,75 @@
+<!-- res/layout/custom_edittext_dialog.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:minHeight="300dp"
+    >
+
+    <EditText
+        android:id="@+id/editTextNote"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:minHeight="250dp"
+        android:layout_weight="1"
+        android:hint="Enter your note"
+        android:padding="10dp"
+        android:textSize="16sp"
+        android:background="@drawable/custom_edittext_background"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="10dp"
+        android:gravity="bottom"
+        android:layout_gravity="bottom">
+
+        <ImageButton
+            android:id="@+id/boldButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_bold"
+            android:contentDescription="Bold Text"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp"
+            android:padding="4dp"/>
+
+        <ImageButton
+            android:id="@+id/textSizeReduce"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_size_reduce"
+            android:contentDescription="Change Text Size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp" />
+
+        <ImageButton
+            android:id="@+id/textSizeInc"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_size_increase"
+            android:contentDescription="Change Text Size"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp"
+
+           />
+
+        <ImageButton
+            android:id="@+id/colorButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/ic_color"
+            android:contentDescription="Change Text Color"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

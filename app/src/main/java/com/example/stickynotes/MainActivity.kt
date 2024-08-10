@@ -2,10 +2,19 @@ package com.example.stickynotes
 
 import Database
 import android.content.DialogInterface
+import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.StyleSpan
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.snackbar.Snackbar
@@ -55,11 +64,8 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
-
         recyclerView = findViewById(R.id.recyclerView)
         fab = findViewById(R.id.fab)
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
         appBarConfiguration = AppBarConfiguration(
             setOf(
                 R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow
@@ -76,37 +82,27 @@ class MainActivity : AppCompatActivity() {
         // Extract data from cursor
         getAndAddNotes()
 
+
         val db = Database(this, null)
+
 
         myAdapter = MyAdapter(ids, titles, dates, notes, { position ->
             val currentNote = notes[position]
 
-
-            // Create an AlertDialog to edit the note
-            val alert = AlertDialog.Builder(this)
-            alert.setTitle("Edit Note")
-
-            val input = EditText(this)
-            input.setText(currentNote)
-            alert.setView(input)
-
-            alert.setPositiveButton("Save") { dialog, which ->
-                val updatedNote = input.text.toString()
+            // Use the function to show the edit dialog
+            showEditNoteDialog(currentNote) { updatedNote ->
+                val updatedTitle = extractTitle(updatedNote)
 
                 // Update the note in the database
-                db.updateNoteById(ids[position],extractTitle(updatedNote) , updatedNote)
+                db.updateNoteById(ids[position], updatedTitle, updatedNote)
 
                 // Update the note in the RecyclerView
                 notes[position] = updatedNote
-                titles[position] = extractTitle(updatedNote)  // Update the title if necessary
+                titles[position] = updatedTitle
                 myAdapter.notifyItemChanged(position)
 
                 Toast.makeText(this, "Note updated", Toast.LENGTH_SHORT).show()
             }
-
-            alert.setNegativeButton("Cancel", null)
-            alert.show()
-
         }, { position ->
             // Long press detected, confirm deletion
             val posToDelete = position
@@ -140,28 +136,25 @@ class MainActivity : AppCompatActivity() {
 
 
         fab.setOnClickListener {
-            val alert =  AlertDialog.Builder(this);
-            alert.setTitle("Edit")
-            val input = EditText(this)
-            alert.setView(input)
 
-            alert.setPositiveButton("Save") { dialog, which ->
-                val userInput = input.text.toString()
+            showEditNoteDialog(""){ updatedNote ->
 
-
-
+                val title=extractTitle(updatedNote)
                 val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
 
                 val date =formattedDate.toString()
 
-                db.addNote(id, title.toString(),date,userInput)
+                db.addNote(id, title,date,updatedNote)
 
-                myAdapter.addItem(id, title.toString(),date,userInput)
+                myAdapter.addItem(id, title,date,updatedNote)
                 recyclerView.scrollToPosition(titles.size - 1)
-
-
             }
-            alert.show()
+
+
+
+
+
+
 
         }
     }
@@ -202,4 +195,88 @@ class MainActivity : AppCompatActivity() {
         }
         return title
     }
+    fun showEditNoteDialog(
+        currentNote: String,
+        onNoteUpdated: (updatedNote: String) -> Unit
+    ) {
+        val alert = AlertDialog.Builder(this)
+        alert.setTitle("Edit Note")
+
+        // Inflate the custom layout
+        val inflater = layoutInflater
+        val dialogView = inflater.inflate(R.layout.edit_text_templete, null)
+
+        // Find the EditText and buttons from the custom layout
+        val editText = dialogView.findViewById<EditText>(R.id.editTextNote)
+        val boldButton = dialogView.findViewById<ImageButton>(R.id.boldButton)
+        val textSizeReduceButton = dialogView.findViewById<ImageButton>(R.id.textSizeReduce)
+        val textSizeIncButton = dialogView.findViewById<ImageButton>(R.id.textSizeInc)
+        val colorButton = dialogView.findViewById<ImageButton>(R.id.colorButton)
+
+        // Set the initial text of EditText
+        editText.setText(currentNote)
+
+        // Set up button click listeners
+        boldButton.setOnClickListener {
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+
+            if (start != end) {
+                val spannableString = SpannableString(editText.text)
+                val existingSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
+                val isBold = existingSpans.any { it.style == Typeface.BOLD }
+
+                if (isBold) {
+                    // Remove bold style if already applied
+                    spannableString.removeSpan(existingSpans.find { it.style == Typeface.BOLD })
+                } else {
+                    // Apply bold style
+                    spannableString.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                }
+
+                // Convert SpannableString to Editable and update EditText
+                val editableText = Editable.Factory.getInstance().newEditable(spannableString)
+                editText.text = editableText
+
+                // Move cursor to end of selection
+                editText.setSelection(end)
+            } else {
+                Toast.makeText(this, "Select text to apply bold", Toast.LENGTH_SHORT).show()
+            }
+        }
+
+        var currentTextSize = editText.textSize
+        textSizeReduceButton.setOnClickListener {
+            currentTextSize = (currentTextSize - 2f).coerceAtLeast(8f) // Decrease text size
+            editText.textSize = currentTextSize / resources.displayMetrics.scaledDensity // Convert pixels to sp
+        }
+
+        textSizeIncButton.setOnClickListener {
+            currentTextSize = (currentTextSize + 2f).coerceAtMost(72f) // Increase text size
+            editText.textSize = currentTextSize / resources.displayMetrics.scaledDensity // Convert pixels to sp
+        }
+        colorButton.setOnClickListener {
+            val colors = arrayOf(Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW)
+            AlertDialog.Builder(this).apply {
+                setTitle("Pick a color")
+                setItems(colors.map { "Color" }.toTypedArray()) { _, which ->
+                    editText.setTextColor(colors[which])
+                }
+                create().show()
+            }
+        }
+
+        // Set the custom layout to AlertDialog
+        alert.setView(dialogView)
+
+        alert.setPositiveButton("Save") { dialog, which ->
+            val updatedNote = editText.text.toString()
+            onNoteUpdated(updatedNote)  // Return the updated note through the callback
+        }
+
+        alert.setNegativeButton("Cancel", null)
+        alert.show()
+    }
+
+
 }
