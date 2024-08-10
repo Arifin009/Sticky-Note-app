@@ -5,35 +5,35 @@ import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
-import android.text.Editable
 import android.text.Spannable
-import android.text.SpannableString
-import android.text.Spanned
+import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import com.google.android.material.snackbar.Snackbar
-import com.google.android.material.navigation.NavigationView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
-import androidx.drawerlayout.widget.DrawerLayout
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stickynotes.databinding.ActivityMainBinding
 import com.example.yourapp.MyAdapter
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import java.sql.Date
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var myAdapter: MyAdapter
     private lateinit var fab: FloatingActionButton
+    private lateinit var editText: EditText
 
     private val ids = mutableListOf<Int>()
     private val titles = mutableListOf<String>()
@@ -64,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = binding.drawerLayout
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
+
         recyclerView = findViewById(R.id.recyclerView)
         fab = findViewById(R.id.fab)
         appBarConfiguration = AppBarConfiguration(
@@ -73,10 +75,6 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-
-
-
-
 
 
         // Extract data from cursor
@@ -137,29 +135,22 @@ class MainActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
 
-            showEditNoteDialog(""){ updatedNote ->
+            showEditNoteDialog("") { updatedNote ->
 
-                val title=extractTitle(updatedNote)
+                val title = extractTitle(updatedNote)
                 val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
 
-                val date =formattedDate.toString()
+                val date = formattedDate.toString()
 
-                db.addNote(id, title,date,updatedNote)
+                db.addNote(id, title, date, updatedNote)
 
-                myAdapter.addItem(id, title,date,updatedNote)
+                myAdapter.addItem(id, title, date, updatedNote)
                 recyclerView.scrollToPosition(titles.size - 1)
             }
 
 
-
-
-
-
-
         }
     }
-
-
 
 
     override fun onSupportNavigateUp(): Boolean {
@@ -167,7 +158,7 @@ class MainActivity : AppCompatActivity() {
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
-    fun getAndAddNotes(){
+    fun getAndAddNotes() {
         val db = Database(this, null)
         val cursor = db.getName()
         cursor?.let {
@@ -184,8 +175,9 @@ class MainActivity : AppCompatActivity() {
             it.close()
         }
     }
+
     fun extractTitle(userInput: String): String {
-        val sp=userInput.split(" ").filter { it.isNotEmpty() }
+        val sp = userInput.split(" ").filter { it.isNotEmpty() }
 
         val title = when {
             sp.size >= 3 -> sp[0] + " " + sp[1] + " " + sp[2]
@@ -195,6 +187,7 @@ class MainActivity : AppCompatActivity() {
         }
         return title
     }
+
     fun showEditNoteDialog(
         currentNote: String,
         onNoteUpdated: (updatedNote: String) -> Unit
@@ -207,8 +200,9 @@ class MainActivity : AppCompatActivity() {
         val dialogView = inflater.inflate(R.layout.edit_text_templete, null)
 
         // Find the EditText and buttons from the custom layout
-        val editText = dialogView.findViewById<EditText>(R.id.editTextNote)
+
         val boldButton = dialogView.findViewById<ImageButton>(R.id.boldButton)
+        editText = dialogView.findViewById<EditText>(R.id.editTextNote)
         val textSizeReduceButton = dialogView.findViewById<ImageButton>(R.id.textSizeReduce)
         val textSizeIncButton = dialogView.findViewById<ImageButton>(R.id.textSizeInc)
         val colorButton = dialogView.findViewById<ImageButton>(R.id.colorButton)
@@ -216,54 +210,37 @@ class MainActivity : AppCompatActivity() {
         // Set the initial text of EditText
         editText.setText(currentNote)
 
+        disableActionMode()
         // Set up button click listeners
         boldButton.setOnClickListener {
-            val start = editText.selectionStart
-            val end = editText.selectionEnd
-
-            if (start != end) {
-                val spannableString = SpannableString(editText.text)
-                val existingSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
-                val isBold = existingSpans.any { it.style == Typeface.BOLD }
-
-                if (isBold) {
-                    // Remove bold style if already applied
-                    spannableString.removeSpan(existingSpans.find { it.style == Typeface.BOLD })
-                } else {
-                    // Apply bold style
-                    spannableString.setSpan(StyleSpan(Typeface.BOLD), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
-                }
-
-                // Convert SpannableString to Editable and update EditText
-                val editableText = Editable.Factory.getInstance().newEditable(spannableString)
-                editText.text = editableText
-
-                // Move cursor to end of selection
-                editText.setSelection(end)
-            } else {
-                Toast.makeText(this, "Select text to apply bold", Toast.LENGTH_SHORT).show()
-            }
+            buttonBold(it)
         }
 
-        var currentTextSize = editText.textSize
+
         textSizeReduceButton.setOnClickListener {
-            currentTextSize = (currentTextSize - 2f).coerceAtLeast(8f) // Decrease text size
-            editText.textSize = currentTextSize / resources.displayMetrics.scaledDensity // Convert pixels to sp
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if(start!=end){
+                selectableTextReduce()
+            }
+            else{
+                nonSlectableTexReduce()
+            }
+
         }
 
         textSizeIncButton.setOnClickListener {
-            currentTextSize = (currentTextSize + 2f).coerceAtMost(72f) // Increase text size
-            editText.textSize = currentTextSize / resources.displayMetrics.scaledDensity // Convert pixels to sp
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if(start!=end){
+                selectableTextInc()
+            }
+            else{
+                nonSlectableTexInc()
+            }
         }
         colorButton.setOnClickListener {
-            val colors = arrayOf(Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW)
-            AlertDialog.Builder(this).apply {
-                setTitle("Pick a color")
-                setItems(colors.map { "Color" }.toTypedArray()) { _, which ->
-                    editText.setTextColor(colors[which])
-                }
-                create().show()
-            }
+            showColorPicker()
         }
 
         // Set the custom layout to AlertDialog
@@ -278,5 +255,214 @@ class MainActivity : AppCompatActivity() {
         alert.show()
     }
 
+
+    fun buttonBold(view: View) {
+
+
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+
+        if (start < end) {
+            val spannableString = SpannableStringBuilder(editText.text)
+            val styleSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
+            val isBold = styleSpans.any { it.style == Typeface.BOLD }
+
+            if (isBold) {
+                // If the text is already bold, remove bold formatting
+                styleSpans.forEach { spannableString.removeSpan(it) }
+            } else {
+                // Apply bold formatting
+                spannableString.setSpan(
+                    StyleSpan(Typeface.BOLD),
+                    start,
+                    end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+
+            editText.setText(spannableString)
+            editText.setSelection(start, end) // Preserve the selection
+        }
+    }
+fun disableActionMode()
+{
+    editText.customSelectionActionModeCallback = object : android.view.ActionMode.Callback {
+        override fun onCreateActionMode(mode: android.view.ActionMode, menu: Menu): Boolean {
+            return false // Prevents the action mode from being created
+        }
+
+        override fun onPrepareActionMode(mode: android.view.ActionMode, menu: Menu): Boolean {
+            return false
+        }
+
+        override fun onActionItemClicked(mode: android.view.ActionMode, item: MenuItem): Boolean {
+            return false
+        }
+
+        override fun onDestroyActionMode(mode: android.view.ActionMode) {
+            // Nothing to do
+        }
+    }
+}
+    fun buttonItalics(view: View) {
+        val spannableString = SpannableStringBuilder(editText.text)
+        spannableString.setSpan(
+            StyleSpan(Typeface.ITALIC),
+            editText.selectionStart,
+            editText.selectionEnd,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        editText.setText(spannableString)
+    }
+
+    // Method to apply underline style
+    fun buttonUnderline(view: View) {
+        val spannableString = SpannableStringBuilder(editText.text)
+        spannableString.setSpan(
+            UnderlineSpan(),
+            editText.selectionStart,
+            editText.selectionEnd,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+        editText.setText(spannableString)
+    }
+
+    // Method to remove all formatting
+    fun buttonNoFormat(view: View) {
+        val stringText = editText.text.toString()
+        editText.setText(stringText)
+    }
+
+    // Method to align text to the left
+    fun buttonAlignmentLeft(view: View) {
+        editText.textAlignment = View.TEXT_ALIGNMENT_TEXT_START
+        val spannableString = SpannableStringBuilder(editText.text)
+        editText.setText(spannableString)
+    }
+
+    // Method to align text to the center
+    fun buttonAlignmentCenter(view: View) {
+        editText.textAlignment = View.TEXT_ALIGNMENT_CENTER
+        val spannableString = SpannableStringBuilder(editText.text)
+        editText.setText(spannableString)
+    }
+
+    // Method to align text to the right
+    fun buttonAlignmentRight(view: View) {
+        editText.textAlignment = View.TEXT_ALIGNMENT_TEXT_END
+        val spannableString = SpannableStringBuilder(editText.text)
+        editText.setText(spannableString)
+    }
+    fun selectableTextReduce(){
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+        val currentSize = getCurrentTextSize(start, end)
+        val newSize = (currentSize - 2f).coerceAtLeast(8f)
+        applyTextSizeSpan(start, end, newSize)
+    }
+    fun selectableTextInc(){
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+        val currentSize = getCurrentTextSize(start, end)
+        val newSize = (currentSize + 2f).coerceAtMost(72f)
+        applyTextSizeSpan(start, end, newSize)
+    }
+    fun nonSlectableTexInc()
+    {
+        var currentTextSize = editText.textSize
+        currentTextSize = (currentTextSize + 2f).coerceAtMost(72f) // Increase text size
+        editText.textSize =
+            currentTextSize / resources.displayMetrics.scaledDensity
+    }
+    fun nonSlectableTexReduce()
+    {
+        var currentTextSize = editText.textSize
+        currentTextSize = (currentTextSize - 2f).coerceAtLeast(8f) // Decrease text size
+        editText.textSize =
+            currentTextSize / resources.displayMetrics.scaledDensity
+    }
+    private fun getCurrentTextSize(start: Int, end: Int): Float {
+        val spannableString = editText.text as Spannable
+        val spans = spannableString.getSpans(start, end, android.text.style.RelativeSizeSpan::class.java)
+        return if (spans.isNotEmpty()) {
+            // If there are spans applied, return the first one
+            val span = spans[0]
+            val sizeRatio = span.sizeChange
+            editText.textSize / resources.displayMetrics.scaledDensity * sizeRatio
+        } else {
+            // If no spans, return the default text size
+            editText.textSize / resources.displayMetrics.scaledDensity
+        }
+    }
+
+    private fun applyTextSizeSpan(start: Int, end: Int, newSize: Float) {
+        val spannableString = SpannableStringBuilder(editText.text)
+        // Remove previous size spans
+        val spans = spannableString.getSpans(start, end, android.text.style.RelativeSizeSpan::class.java)
+        spans.forEach { spannableString.removeSpan(it) }
+
+        // Apply new size span
+        spannableString.setSpan(
+            android.text.style.RelativeSizeSpan(newSize / (editText.textSize / resources.displayMetrics.scaledDensity)),
+            start,
+            end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        editText.setText(spannableString)
+        editText.setSelection(start, end)
+    }
+    private fun showColorPicker() {
+        val colors = arrayOf(
+            "Red", "Green", "Blue", "Yellow", "Cyan", "Magenta",
+            "Black", "White", "Gray", "Light Gray", "Dark Gray", "Purple",
+            "Orange", "Brown", "Pink", "Light Blue"
+        )
+
+        val colorValues = intArrayOf(
+            Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW, Color.CYAN, Color.MAGENTA,
+            Color.BLACK, Color.WHITE, Color.GRAY, Color.LTGRAY, Color.DKGRAY, Color.rgb(128, 0, 128),
+            Color.rgb(255, 165, 0), Color.rgb(165, 42, 42), Color.rgb(255, 192, 203), Color.rgb(173, 216, 230)
+        )
+
+        val colorPickerDialog = MaterialAlertDialogBuilder(this)
+            .setTitle("Choose a color")
+            .setItems(colors) { _, which ->
+                val selectedColor = colorValues[which]
+                //changeBackgroundColor(selectedColor)
+                changeTextColor(selectedColor)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+
+        colorPickerDialog.show()
+    }
+
+    private fun changeBackgroundColor(color: Int) {
+        // Assuming you want to change the background color of an EditText
+
+        editText.setBackgroundColor(color)
+
+        // If you want to change the background color of a different view, replace `editText` with your view
+        // For example, if changing a LinearLayout background color:
+        // val layout: LinearLayout = findViewById(R.id.your_linear_layout_id)
+        // layout.setBackgroundColor(color)
+
+        // If you want to show a toast to confirm the color change:
+        Toast.makeText(this, "Background color changed", Toast.LENGTH_SHORT).show()
+    }
+    private fun changeTextColor(color: Int) {
+        // Assuming you want to change the text color of an EditText
+       // Replace with your actual EditText ID
+        editText.setTextColor(color)
+
+        // If you want to change the text color of a different view, replace `editText` with your view
+        // For example, if changing a TextView color:
+        // val textView: TextView = findViewById(R.id.your_text_view_id)
+        // textView.setTextColor(color)
+
+        // If you want to show a toast to confirm the color change:
+        Toast.makeText(this, "Text color changed", Toast.LENGTH_SHORT).show()
+    }
 
 }
