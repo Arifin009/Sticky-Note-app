@@ -215,6 +215,8 @@ class MainActivity : AppCompatActivity() {
         val copyButton = dialogView.findViewById<ImageButton>(R.id.copyButton)
         val cutButton = dialogView.findViewById<ImageButton>(R.id.cutButton)
         val undoButton = dialogView.findViewById<ImageButton>(R.id.undoButton)
+        val unnderlineBtn = dialogView.findViewById<ImageButton>(R.id.unnderlineBtn)
+        val italicBtn = dialogView.findViewById<ImageButton>(R.id.italicBtn)
 
         // Set the initial text of EditText
         editText.setText(currentNote)
@@ -223,6 +225,12 @@ class MainActivity : AppCompatActivity() {
         // Set up button click listeners
         boldButton.setOnClickListener {
             buttonBold(it)
+        }
+        unnderlineBtn.setOnClickListener{
+         buttonUnderline(it)
+        }
+        italicBtn.setOnClickListener{
+            buttonItalics(it)
         }
         undoButton.setOnClickListener{
             undoAction()
@@ -337,6 +345,7 @@ fun disableActionMode()
     }
 }
     fun buttonItalics(view: View) {
+        saveState()
         val spannableString = SpannableStringBuilder(editText.text)
         spannableString.setSpan(
             StyleSpan(Typeface.ITALIC),
@@ -349,6 +358,7 @@ fun disableActionMode()
 
     // Method to apply underline style
     fun buttonUnderline(view: View) {
+        saveState()
         val spannableString = SpannableStringBuilder(editText.text)
         spannableString.setSpan(
             UnderlineSpan(),

@@ -71,46 +71,72 @@
 
         <ImageButton
             android:id="@+id/boldButton"
-            android:layout_width="30dp"
+           android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_bold"
             android:contentDescription="Bold Text"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
-            android:layout_margin="10dp"
+
             android:padding="4dp"/>
 
         <ImageButton
             android:id="@+id/textSizeReduce"
-            android:layout_width="30dp"
+           android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_size_reduce"
             android:contentDescription="Change Text Size"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
-            android:layout_margin="10dp" />
+            />
 
         <ImageButton
             android:id="@+id/textSizeInc"
-            android:layout_width="30dp"
+           android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_size_increase"
             android:contentDescription="Change Text Size"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
-            android:layout_margin="10dp"
+
 
            />
+        <ImageButton
+            android:id="@+id/unnderlineBtn"
+           android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="30dp"
+            android:src="@drawable/underline"
+            android:contentDescription="Change Text Color"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+
+            android:padding="4dp"/>
 
         <ImageButton
+            android:id="@+id/italicBtn"
+           android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="30dp"
+            android:src="@drawable/italic_icon"
+            android:contentDescription="Change Text Color"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+
+            android:padding="4dp"/>
+        <ImageButton
             android:id="@+id/colorButton"
-            android:layout_width="30dp"
+           android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_color"
             android:contentDescription="Change Text Color"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
-            android:layout_margin="10dp" />
+            />
 
     </LinearLayout>
 
