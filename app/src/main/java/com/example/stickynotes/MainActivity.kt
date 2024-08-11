@@ -1,12 +1,16 @@
 package com.example.stickynotes
 
 import Database
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.view.Menu
@@ -33,6 +37,7 @@ import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Stack
 
 
 class MainActivity : AppCompatActivity() {
@@ -48,6 +53,7 @@ class MainActivity : AppCompatActivity() {
     private val titles = mutableListOf<String>()
     private val dates = mutableListOf<String>()
     private val notes = mutableListOf<String>()
+    private val undoStack = Stack<CharSequence>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -202,10 +208,13 @@ class MainActivity : AppCompatActivity() {
         // Find the EditText and buttons from the custom layout
 
         val boldButton = dialogView.findViewById<ImageButton>(R.id.boldButton)
-        editText = dialogView.findViewById<EditText>(R.id.editTextNote)
+        editText = dialogView.findViewById(R.id.editTextNote)
         val textSizeReduceButton = dialogView.findViewById<ImageButton>(R.id.textSizeReduce)
         val textSizeIncButton = dialogView.findViewById<ImageButton>(R.id.textSizeInc)
         val colorButton = dialogView.findViewById<ImageButton>(R.id.colorButton)
+        val copyButton = dialogView.findViewById<ImageButton>(R.id.copyButton)
+        val cutButton = dialogView.findViewById<ImageButton>(R.id.cutButton)
+        val undoButton = dialogView.findViewById<ImageButton>(R.id.undoButton)
 
         // Set the initial text of EditText
         editText.setText(currentNote)
@@ -215,8 +224,31 @@ class MainActivity : AppCompatActivity() {
         boldButton.setOnClickListener {
             buttonBold(it)
         }
+        undoButton.setOnClickListener{
+            undoAction()
+        }
+        copyButton.setOnClickListener{
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
 
+            if (start != end) {
+                copySelectedText()
+            }
+            else{
+                copyAllText()
+            }
 
+        }
+        cutButton.setOnClickListener{
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if (start != end) {
+                cutSelectedText()
+            }
+            else{
+                cutAllText()
+            }
+        }
         textSizeReduceButton.setOnClickListener {
             val start = editText.selectionStart
             val end = editText.selectionEnd
@@ -258,7 +290,7 @@ class MainActivity : AppCompatActivity() {
 
     fun buttonBold(view: View) {
 
-
+        saveState()
         val start = editText.selectionStart
         val end = editText.selectionEnd
 
@@ -354,6 +386,7 @@ fun disableActionMode()
         editText.setText(spannableString)
     }
     fun selectableTextReduce(){
+        saveState()
         val start = editText.selectionStart
         val end = editText.selectionEnd
         val currentSize = getCurrentTextSize(start, end)
@@ -361,6 +394,7 @@ fun disableActionMode()
         applyTextSizeSpan(start, end, newSize)
     }
     fun selectableTextInc(){
+        saveState()
         val start = editText.selectionStart
         val end = editText.selectionEnd
         val currentSize = getCurrentTextSize(start, end)
@@ -369,6 +403,7 @@ fun disableActionMode()
     }
     fun nonSlectableTexInc()
     {
+        saveState()
         var currentTextSize = editText.textSize
         currentTextSize = (currentTextSize + 2f).coerceAtMost(72f) // Increase text size
         editText.textSize =
@@ -376,6 +411,7 @@ fun disableActionMode()
     }
     fun nonSlectableTexReduce()
     {
+        saveState()
         var currentTextSize = editText.textSize
         currentTextSize = (currentTextSize - 2f).coerceAtLeast(8f) // Decrease text size
         editText.textSize =
@@ -430,14 +466,45 @@ fun disableActionMode()
             .setItems(colors) { _, which ->
                 val selectedColor = colorValues[which]
                 //changeBackgroundColor(selectedColor)
-                changeTextColor(selectedColor)
+
+                val start = editText.selectionStart
+                val end = editText.selectionEnd
+
+                if(start!=end){
+                    selectableColorSet(selectedColor)
+                }
+                else{
+                    changeTextColor(selectedColor)
+                }
             }
             .setNegativeButton("Cancel", null)
             .create()
 
         colorPickerDialog.show()
     }
+        private fun selectableColorSet(color: Int)
+        {
+            saveState()
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
 
+            val spannableString = SpannableStringBuilder(editText.text)
+            val styleSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
+            styleSpans.forEach { spannableString.removeSpan(it) }
+
+                // Apply bold formatting
+                spannableString.setSpan(
+                    ForegroundColorSpan(color),
+                    start,
+                    end,
+
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+
+
+            editText.setText(spannableString)
+            editText.setSelection(start, end)
+        }
     private fun changeBackgroundColor(color: Int) {
         // Assuming you want to change the background color of an EditText
 
@@ -454,6 +521,7 @@ fun disableActionMode()
     private fun changeTextColor(color: Int) {
         // Assuming you want to change the text color of an EditText
        // Replace with your actual EditText ID
+        saveState()
         editText.setTextColor(color)
 
         // If you want to change the text color of a different view, replace `editText` with your view
@@ -463,6 +531,75 @@ fun disableActionMode()
 
         // If you want to show a toast to confirm the color change:
         Toast.makeText(this, "Text color changed", Toast.LENGTH_SHORT).show()
+    }
+    private fun copySelectedText() {
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+
+        if (start != end) {
+            val selectedText = editText.text.substring(start, end)
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Copied Text", selectedText)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "Text copied to clipboard", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "No text selected", Toast.LENGTH_SHORT).show()
+        }
+    }
+    private fun cutSelectedText() {
+        saveState()
+        val start = editText.selectionStart
+        val end = editText.selectionEnd
+
+        if (start != end) {
+            val selectedText = editText.text.substring(start, end)
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Cut Text", selectedText)
+            clipboard.setPrimaryClip(clip)
+
+            // Remove the selected text
+            editText.text.delete(start, end)
+            Toast.makeText(this, "Text cut to clipboard", Toast.LENGTH_SHORT).show()
+        }
+    }
+    private fun copyAllText() {
+        val text = editText.text.toString()
+        if (text.isNotEmpty()) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Copied Text", text)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(this, "All text copied to clipboard", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "No text to copy", Toast.LENGTH_SHORT).show()
+        }
+    }
+    private fun cutAllText() {
+        saveState()
+        val text = editText.text.toString()
+        if (text.isNotEmpty()) {
+            val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Cut Text", text)
+            clipboard.setPrimaryClip(clip)
+
+            // Clear all the text
+            editText.text.clear()
+            Toast.makeText(this, "All text cut to clipboard", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "No text to cut", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun undoAction() {
+        if (undoStack.isNotEmpty()) {
+            editText.setText(undoStack.pop())
+            editText.setSelection(editText.text.length)
+        } else {
+            Toast.makeText(this, "Nothing to undo", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun saveState() {
+        undoStack.push(editText.text.toString())
     }
 
 }
