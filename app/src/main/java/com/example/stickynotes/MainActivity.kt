@@ -1,18 +1,19 @@
 package com.example.stickynotes
 
-import Database
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.content.DialogInterface
 import android.graphics.Color
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -38,6 +39,7 @@ import com.google.android.material.snackbar.Snackbar
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Stack
+import java.util.UUID
 
 
 class MainActivity : AppCompatActivity() {
@@ -49,11 +51,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fab: FloatingActionButton
     private lateinit var editText: EditText
 
-    private val ids = mutableListOf<Int>()
+    private val ids = mutableListOf<String>()
     private val titles = mutableListOf<String>()
     private val dates = mutableListOf<String>()
     private val notes = mutableListOf<String>()
     private val undoStack = Stack<CharSequence>()
+    private val formattingList = mutableListOf<TextFormat>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,14 +95,17 @@ class MainActivity : AppCompatActivity() {
 
         myAdapter = MyAdapter(ids, titles, dates, notes, { position ->
             val currentNote = notes[position]
-
+            Log.d("position",ids[position].toString())
             // Use the function to show the edit dialog
-            showEditNoteDialog(currentNote) { updatedNote ->
+            showEditNoteDialog(currentNote,ids[position]) { updatedNote,formatting ->
                 val updatedTitle = extractTitle(updatedNote)
 
                 // Update the note in the database
                 db.updateNoteById(ids[position], updatedTitle, updatedNote)
 
+                for (format in formatting) {
+                    db.addTextFormat(ids[position], format)
+                }
                 // Update the note in the RecyclerView
                 notes[position] = updatedNote
                 titles[position] = updatedTitle
@@ -141,14 +147,18 @@ class MainActivity : AppCompatActivity() {
 
         fab.setOnClickListener {
 
-            showEditNoteDialog("") { updatedNote ->
+            openNewNoteDialog() { updatedNote,formatting ->
 
                 val title = extractTitle(updatedNote)
-                val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
+                val id: String = UUID.randomUUID().toString()
+               // val id = if (ids.isNotEmpty()) ids.last() + 1 else 1
 
                 val date = formattedDate.toString()
 
                 db.addNote(id, title, date, updatedNote)
+                for (format in formatting) {
+                    db.addTextFormat(id, format)
+                }
 
                 myAdapter.addItem(id, title, date, updatedNote)
                 recyclerView.scrollToPosition(titles.size - 1)
@@ -169,7 +179,7 @@ class MainActivity : AppCompatActivity() {
         val cursor = db.getName()
         cursor?.let {
             while (it.moveToNext()) {
-                val id = it.getInt(it.getColumnIndexOrThrow("id"))
+                val id = it.getString(it.getColumnIndexOrThrow("id"))
                 val title = it.getString(it.getColumnIndexOrThrow("title"))
                 val date = it.getString(it.getColumnIndexOrThrow("date"))
                 val note = it.getString(it.getColumnIndexOrThrow("note"))
@@ -196,15 +206,17 @@ class MainActivity : AppCompatActivity() {
 
     fun showEditNoteDialog(
         currentNote: String,
-        onNoteUpdated: (updatedNote: String) -> Unit
+        noteId: String,
+        onNoteUpdated: (updatedNote: String, formatting: List<TextFormat>) -> Unit
     ) {
+        formattingList.clear()
         val alert = AlertDialog.Builder(this)
         alert.setTitle("Edit Note")
 
         // Inflate the custom layout
         val inflater = layoutInflater
         val dialogView = inflater.inflate(R.layout.edit_text_templete, null)
-
+        val db = Database(this, null)
         // Find the EditText and buttons from the custom layout
 
         val boldButton = dialogView.findViewById<ImageButton>(R.id.boldButton)
@@ -220,6 +232,65 @@ class MainActivity : AppCompatActivity() {
 
         // Set the initial text of EditText
         editText.setText(currentNote)
+        val spannableString = SpannableStringBuilder(editText.text)
+        // Set the format text of EditText
+        val dbFormatList = db.getTextFormats(noteId)
+        for (format in dbFormatList) {
+            Log.d("format",format.styleName+ format.start+format.end).toString()
+            when (format.styleName) {
+
+                "BOLD" -> {
+
+                    spannableString.setSpan(
+                        StyleSpan(Typeface.BOLD),
+                        format.start,
+                        format.end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    editText.setText(spannableString)
+                }
+                "ITALIC" -> {
+                    spannableString.setSpan(
+                        StyleSpan(Typeface.ITALIC),
+                        format.start,
+                        format.end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    editText.setText(spannableString)
+                }
+                "COLOR" -> {
+                    spannableString.setSpan(
+                        ForegroundColorSpan(format.Ext_info.toInt()),
+                        format.start,
+                        format.end,
+
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    editText.setText(spannableString)
+
+                }
+                "SIZE" -> {
+                    spannableString.setSpan(
+                        RelativeSizeSpan(format.Ext_info.toFloat()), // 1.5f means 150% of the original size
+                        format.start,
+                        format.end,
+                        // end index of the span
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE // span mode
+                    )
+                }
+                "UNDER" -> {
+                    spannableString.setSpan(
+                        UnderlineSpan(),
+                        format.start,
+                        format.end,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    editText.setText(spannableString)// span mode
+
+                }
+                // Handle other styles like Italic, Underline, etc.
+            }
+        }
 
         disableActionMode()
         // Set up button click listeners
@@ -288,13 +359,115 @@ class MainActivity : AppCompatActivity() {
 
         alert.setPositiveButton("Save") { dialog, which ->
             val updatedNote = editText.text.toString()
-            onNoteUpdated(updatedNote)  // Return the updated note through the callback
+            onNoteUpdated(updatedNote, formattingList)   // Return the updated note through the callback
         }
 
         alert.setNegativeButton("Cancel", null)
         alert.show()
     }
 
+    fun openNewNoteDialog(
+
+        onNoteUpdated: (updatedNote: String, formatting: List<TextFormat>) -> Unit
+    ) {
+        formattingList.clear()
+        val alert = AlertDialog.Builder(this)
+        alert.setTitle("Edit Note")
+
+        // Inflate the custom layout
+        val inflater = layoutInflater
+        val dialogView = inflater.inflate(R.layout.edit_text_templete, null)
+        val db = Database(this, null)
+        // Find the EditText and buttons from the custom layout
+
+        val boldButton = dialogView.findViewById<ImageButton>(R.id.boldButton)
+        editText = dialogView.findViewById(R.id.editTextNote)
+        val textSizeReduceButton = dialogView.findViewById<ImageButton>(R.id.textSizeReduce)
+        val textSizeIncButton = dialogView.findViewById<ImageButton>(R.id.textSizeInc)
+        val colorButton = dialogView.findViewById<ImageButton>(R.id.colorButton)
+        val copyButton = dialogView.findViewById<ImageButton>(R.id.copyButton)
+        val cutButton = dialogView.findViewById<ImageButton>(R.id.cutButton)
+        val undoButton = dialogView.findViewById<ImageButton>(R.id.undoButton)
+        val unnderlineBtn = dialogView.findViewById<ImageButton>(R.id.unnderlineBtn)
+        val italicBtn = dialogView.findViewById<ImageButton>(R.id.italicBtn)
+
+        // Set the initial text of EditText
+        //editText.setText("")
+
+
+        disableActionMode()
+        // Set up button click listeners
+        boldButton.setOnClickListener {
+            buttonBold(it)
+        }
+        unnderlineBtn.setOnClickListener{
+            buttonUnderline(it)
+        }
+        italicBtn.setOnClickListener{
+            buttonItalics(it)
+        }
+        undoButton.setOnClickListener{
+            undoAction()
+        }
+        copyButton.setOnClickListener{
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+
+            if (start != end) {
+                copySelectedText()
+            }
+            else{
+                copyAllText()
+            }
+
+        }
+        cutButton.setOnClickListener{
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if (start != end) {
+                cutSelectedText()
+            }
+            else{
+                cutAllText()
+            }
+        }
+        textSizeReduceButton.setOnClickListener {
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if(start!=end){
+                selectableTextReduce()
+            }
+            else{
+                nonSlectableTexReduce()
+            }
+
+        }
+
+        textSizeIncButton.setOnClickListener {
+            val start = editText.selectionStart
+            val end = editText.selectionEnd
+            if(start!=end){
+                selectableTextInc()
+            }
+            else{
+                nonSlectableTexInc()
+            }
+        }
+        colorButton.setOnClickListener {
+            showColorPicker()
+        }
+
+        // Set the custom layout to AlertDialog
+        alert.setView(dialogView)
+
+        alert.setPositiveButton("Save") { dialog, which ->
+            val updatedNote = editText.text.toString()
+            onNoteUpdated(updatedNote, formattingList)   // Return the updated note through the callback
+        }
+
+        alert.setNegativeButton("Cancel", null)
+        alert.show()
+    }
 
     fun buttonBold(view: View) {
 
@@ -302,7 +475,8 @@ class MainActivity : AppCompatActivity() {
         val start = editText.selectionStart
         val end = editText.selectionEnd
 
-        if (start < end) {
+
+        if (start != end) {
             val spannableString = SpannableStringBuilder(editText.text)
             val styleSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
             val isBold = styleSpans.any { it.style == Typeface.BOLD }
@@ -311,6 +485,7 @@ class MainActivity : AppCompatActivity() {
                 // If the text is already bold, remove bold formatting
                 styleSpans.forEach { spannableString.removeSpan(it) }
             } else {
+                formattingList.add(TextFormat("BOLD", start, end,""))
                 // Apply bold formatting
                 spannableString.setSpan(
                     StyleSpan(Typeface.BOLD),
@@ -345,6 +520,9 @@ fun disableActionMode()
     }
 }
     fun buttonItalics(view: View) {
+
+        formattingList.add(TextFormat("ITALIC", editText.selectionStart, editText.selectionEnd,""))
+        Log.d("italicformat", (editText.selectionEnd).toString())
         saveState()
         val spannableString = SpannableStringBuilder(editText.text)
         spannableString.setSpan(
@@ -352,14 +530,19 @@ fun disableActionMode()
             editText.selectionStart,
             editText.selectionEnd,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+
         )
         editText.setText(spannableString)
+
     }
 
     // Method to apply underline style
     fun buttonUnderline(view: View) {
+        //val db = Database(this, null)
         saveState()
         val spannableString = SpannableStringBuilder(editText.text)
+        formattingList.add(TextFormat("UNDER", editText.selectionStart, editText.selectionEnd,""))
+
         spannableString.setSpan(
             UnderlineSpan(),
             editText.selectionStart,
@@ -367,6 +550,7 @@ fun disableActionMode()
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         editText.setText(spannableString)
+
     }
 
     // Method to remove all formatting
@@ -395,13 +579,16 @@ fun disableActionMode()
         val spannableString = SpannableStringBuilder(editText.text)
         editText.setText(spannableString)
     }
-    fun selectableTextReduce(){
+    fun selectableTextReduce():String{
         saveState()
         val start = editText.selectionStart
         val end = editText.selectionEnd
         val currentSize = getCurrentTextSize(start, end)
         val newSize = (currentSize - 2f).coerceAtLeast(8f)
+       formattingList.add(TextFormat("SIZE", start, end,newSize.toString()))
         applyTextSizeSpan(start, end, newSize)
+        return newSize.toString()
+
     }
     fun selectableTextInc(){
         saveState()
@@ -409,7 +596,10 @@ fun disableActionMode()
         val end = editText.selectionEnd
         val currentSize = getCurrentTextSize(start, end)
         val newSize = (currentSize + 2f).coerceAtMost(72f)
+        formattingList.add(TextFormat("SIZE", start, end,newSize.toString()))
         applyTextSizeSpan(start, end, newSize)
+
+
     }
     fun nonSlectableTexInc()
     {
@@ -481,6 +671,7 @@ fun disableActionMode()
                 val end = editText.selectionEnd
 
                 if(start!=end){
+                    formattingList.add(TextFormat("COLOR", start, end,selectedColor.toString()))
                     selectableColorSet(selectedColor)
                 }
                 else{

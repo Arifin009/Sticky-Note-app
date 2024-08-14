@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.stickynotes.R
 
 class MyAdapter(
-    private val ids: MutableList<Int>,
+    private val ids: MutableList<String>,
     private val titles: MutableList<String>,
     private val subtitles: MutableList<String>,
     private val notes: MutableList<String>,
@@ -54,7 +54,7 @@ class MyAdapter(
     }
 
     // Method to add new items to the list
-    fun addItem(id:Int,title: String, subtitle: String,note:String) {
+    fun addItem(id:String,title: String, subtitle: String,note:String) {
         ids.add(id)
         titles.add(title)
         subtitles.add(subtitle)
