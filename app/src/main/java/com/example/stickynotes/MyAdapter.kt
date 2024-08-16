@@ -10,9 +10,9 @@ import com.example.stickynotes.R
 
 class MyAdapter(
     private val ids: MutableList<String>,
-    private val titles: MutableList<String>,
-    private val subtitles: MutableList<String>,
-    private val notes: MutableList<String>,
+    val titles: MutableList<String>,
+    val subtitles: MutableList<String>,
+    val notes: MutableList<String>,
     private val onItemClick: (Int) -> Unit,
     private val onItemLongClick: (Int) -> Unit,
 

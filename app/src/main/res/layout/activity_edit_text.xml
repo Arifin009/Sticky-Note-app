@@ -1,19 +1,33 @@
 <!-- res/layout/custom_edittext_dialog.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
+
     android:padding="16dp"
     android:minHeight="300dp"
+    android:layout_gravity="center"
     >
     <LinearLayout
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginTop="10dp"
-        android:gravity="right"
+
+
 
         >
+        <ImageButton
+            android:id="@+id/backButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/back"
+            android:contentDescription="Bold Text"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
+            />
         <ImageButton
             android:id="@+id/undoButton"
             android:layout_width="30dp"
@@ -23,7 +37,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
-
+            android:layout_weight="1"
             />
         <ImageButton
             android:id="@+id/copyButton"
@@ -34,8 +48,8 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
-
-           />
+            android:layout_weight="1"
+            />
 
         <ImageButton
             android:id="@+id/cutButton"
@@ -46,20 +60,25 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
-            android:padding="1.5dp"/>
+            android:padding="1.5dp"
+            android:layout_weight="1"/>
 
     </LinearLayout>
-    <EditText
+
+    <jp.wasabeef.richeditor.RichEditor
         android:id="@+id/editTextNote"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:minHeight="250dp"
         android:layout_weight="1"
-        android:hint="Enter your note"
-        android:padding="10dp"
+        android:minHeight="250dp"
+
         android:textSize="16sp"
-        android:background="@drawable/custom_edittext_background"
+        android:focusable="true"
+        android:focusableInTouchMode="true"
+        android:clickable="true"
+
         />
+
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -71,7 +90,7 @@
 
         <ImageButton
             android:id="@+id/boldButton"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_bold"
@@ -83,7 +102,7 @@
 
         <ImageButton
             android:id="@+id/textSizeReduce"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_size_reduce"
@@ -94,7 +113,7 @@
 
         <ImageButton
             android:id="@+id/textSizeInc"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_size_increase"
@@ -103,10 +122,10 @@
             android:scaleType="fitCenter"
 
 
-           />
+            />
         <ImageButton
             android:id="@+id/unnderlineBtn"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/underline"
@@ -118,7 +137,7 @@
 
         <ImageButton
             android:id="@+id/italicBtn"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/italic_icon"
@@ -129,7 +148,7 @@
             android:padding="4dp"/>
         <ImageButton
             android:id="@+id/colorButton"
-           android:layout_width="0dp"
+            android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
             android:src="@drawable/ic_color"

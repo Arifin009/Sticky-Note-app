@@ -15,7 +15,7 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="#03D9C4"
+            android:background="@color/topbar_color"
             app:popupTheme="@style/Theme.StickyNotes.NoActionBar">
 
             <androidx.appcompat.widget.SearchView
