@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 
 import androidx.appcompat.app.AppCompatActivity
@@ -69,12 +70,30 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
+        // Set up AppBarConfiguration with drawer layout
         appBarConfiguration = AppBarConfiguration(
             setOf(R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow), drawerLayout
         )
+
+        // Set up ActionBar with NavController
         setupActionBarWithNavController(navController, appBarConfiguration)
+
+        // Set up NavigationView with NavController
         navView.setupWithNavController(navController)
+
+        // Add ActionBarDrawerToggle to handle drawer open/close with hamburger button
+        val toggle = ActionBarDrawerToggle(
+            this, drawerLayout, binding.appBarMain.toolbar,
+            R.string.navigation_drawer_open, R.string.navigation_drawer_close
+        )
+
+        // Add DrawerListener to DrawerLayout
+        drawerLayout.addDrawerListener(toggle)
+
+        // Sync the toggle state
+        toggle.syncState()
     }
+
 private fun getTextResult()
 {
     getResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

@@ -50,6 +50,8 @@ dependencies {
     implementation(libs.androidx.navigation.ui.ktx)
     implementation (libs.androidx.recyclerview)
     implementation (libs.richeditor.android)
+    implementation (libs.colorpicker)
+
     implementation(libs.androidx.activity)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

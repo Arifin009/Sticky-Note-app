@@ -5,17 +5,25 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Html
 import android.util.Log
+import android.view.MenuInflater
+import android.view.View
+import android.widget.Button
 import android.widget.ImageButton
+import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
+import com.jaredrummler.android.colorpicker.ColorPickerDialog
+import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 
 import jp.wasabeef.richeditor.RichEditor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
-class Edit_Text : AppCompatActivity() {
+class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
 
     private lateinit var editText: RichEditor
+    private lateinit var buttonFontSize: ImageButton
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.TRANSPARENT
@@ -31,13 +39,17 @@ class Edit_Text : AppCompatActivity() {
 
         findViewById<ImageButton>(R.id.boldButton).setOnClickListener { editText.setBold() }
        findViewById<ImageButton>(R.id.unnderlineBtn).setOnClickListener { editText.setUnderline() }
-        findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { toggleItalic(noteId) }
-//        findViewById<ImageButton>(R.id.undoButton).setOnClickListener { undoAction() }
-//        findViewById<ImageButton>(R.id.copyButton).setOnClickListener { copyText() }
+        findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { editText.setItalic() }
+        findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo() }
+ //       findViewById<ImageButton>(R.id.copyButton).setOnClickListener { editText.setCopy() }
 //        findViewById<ImageButton>(R.id.cutButton).setOnClickListener { cutText() }
-//        findViewById<ImageButton>(R.id.textSizeReduce).setOnClickListener {}
-//        findViewById<ImageButton>(R.id.textSizeInc).setOnClickListener {}
-//        findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker() }
+
+
+         buttonFontSize = findViewById<ImageButton>(R.id.textSizeInc)
+        buttonFontSize.setOnClickListener {
+            showFontSizeMenu()
+        }
+       findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker() }
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
 
@@ -55,6 +67,25 @@ class Edit_Text : AppCompatActivity() {
 
 
     }
+
+    private fun showColorPicker() {
+        ColorPickerDialog.newBuilder()
+            .setDialogType(ColorPickerDialog.TYPE_PRESETS)  // Dialog type (PRESETS or CUSTOM)
+            .setAllowCustom(true)  // Allow custom colors
+            .setShowAlphaSlider(true)  // Show alpha slider (transparency)
+            .setDialogId(0)  // Dialog ID
+            .show(this)  // Show dialog
+
+    }
+    override fun onColorSelected(dialogId: Int, color: Int) {
+        //Log.d("color",color.toString())
+        editText.setTextColor(color)
+    }
+
+    override fun onDialogDismissed(dialogId: Int) {
+
+    }
+
 
     private fun updateToDatabase() {
        val id= intent.getStringExtra("id")
@@ -121,6 +152,26 @@ class Edit_Text : AppCompatActivity() {
     }
 
 
+    private fun showFontSizeMenu() {
+        val popupMenu = PopupMenu(this, buttonFontSize)
+        val menuInflater: MenuInflater = popupMenu.menuInflater
+        menuInflater.inflate(R.menu.font_size_menu, popupMenu.menu)
 
+        popupMenu.setOnMenuItemClickListener { item ->
+            val fontSize = when (item.itemId) {
+                R.id.font_size_2-> 2
+                R.id.font_size_5 -> 5
+                R.id.font_size_10-> 10
+
+
+                else -> 3
+            }
+            Log.d("size",fontSize.toString())
+           editText.setFontSize(fontSize)
+            true
+        }
+
+        popupMenu.show()
+    }
 
 }

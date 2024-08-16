@@ -100,16 +100,7 @@
 
             android:padding="4dp"/>
 
-        <ImageButton
-            android:id="@+id/textSizeReduce"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="30dp"
-            android:src="@drawable/ic_size_reduce"
-            android:contentDescription="Change Text Size"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:scaleType="fitCenter"
-            />
+
 
         <ImageButton
             android:id="@+id/textSizeInc"
