@@ -1,16 +1,21 @@
 package com.example.stickynotes
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.text.Html
 import android.util.Log
 import android.view.MenuInflater
 import android.view.View
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 
@@ -23,7 +28,11 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
 
     private lateinit var editText: RichEditor
     private lateinit var buttonFontSize: ImageButton
+    private lateinit var frameLayout: FrameLayout
 
+
+    private  val DEFAULT_COLOR = android.graphics.Color.WHITE
+    private lateinit var bg_color: String
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.TRANSPARENT
@@ -31,25 +40,36 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         setContentView(R.layout.activity_edit_text)
         supportActionBar?.hide()
         editText=findViewById(R.id.editTextNote)
+        frameLayout = findViewById<FrameLayout>(R.id.frameLayout)
+        bg_color=DEFAULT_COLOR.toString()
+       Database(this,null).apply{
+           intent.getStringExtra("id")?.let { getColorById(it) }
+           ?.let { applyColor(it.toInt()) }
+       }
+
+//        if (color != null) {
+//            applyColor(color.toInt())
+//        }
+
         editText.setPlaceholder("type here....")
         editText.setPadding(30, 30, 30, 30)
 
+
         val note = intent.getStringExtra("note")
         editText.setHtml(note)
-
         findViewById<ImageButton>(R.id.boldButton).setOnClickListener { editText.setBold() }
-       findViewById<ImageButton>(R.id.unnderlineBtn).setOnClickListener { editText.setUnderline() }
+        findViewById<ImageButton>(R.id.unnderlineBtn).setOnClickListener { editText.setUnderline() }
         findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { editText.setItalic() }
         findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo() }
- //       findViewById<ImageButton>(R.id.copyButton).setOnClickListener { editText.setCopy() }
+        findViewById<ImageButton>(R.id.bgButton).setOnClickListener { showColorPicker(0) }
 //        findViewById<ImageButton>(R.id.cutButton).setOnClickListener { cutText() }
 
 
-         buttonFontSize = findViewById<ImageButton>(R.id.textSizeInc)
+        buttonFontSize = findViewById<ImageButton>(R.id.textSizeInc)
         buttonFontSize.setOnClickListener {
             showFontSizeMenu()
         }
-       findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker() }
+       findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
 
@@ -68,18 +88,40 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
 
     }
 
-    private fun showColorPicker() {
+    private fun applyColor(color: Int) {
+        editText.setBackgroundColor(color)
+
+        val gradientDrawable = GradientDrawable()
+        gradientDrawable.shape = GradientDrawable.RECTANGLE // Set the shape (e.g., RECTANGLE, OVAL)
+        gradientDrawable.setColor(color) // Set the background color
+        gradientDrawable.cornerRadius = 20f // Set the corner radius
+//            gradientDrawable.setStroke(2, Color.BLACK)
+        frameLayout.background = gradientDrawable
+    }
+
+    private fun showColorPicker(dialogId: Int) {
         ColorPickerDialog.newBuilder()
             .setDialogType(ColorPickerDialog.TYPE_PRESETS)  // Dialog type (PRESETS or CUSTOM)
             .setAllowCustom(true)  // Allow custom colors
             .setShowAlphaSlider(true)  // Show alpha slider (transparency)
-            .setDialogId(0)  // Dialog ID
+            .setDialogId(dialogId)  // Dialog ID
             .show(this)  // Show dialog
 
     }
     override fun onColorSelected(dialogId: Int, color: Int) {
         //Log.d("color",color.toString())
-        editText.setTextColor(color)
+        if (dialogId==1)
+        {
+            editText.setTextColor(color)
+
+        }
+        else
+        {
+            applyColor(color)
+            bg_color=color.toString()
+
+        }
+
     }
 
     override fun onDialogDismissed(dialogId: Int) {
@@ -94,7 +136,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         {
             Database(this,null).apply{
                 if (id != null) {
-                    updateNoteById(id, title,editText.html.toString())
+                    updateNoteById(id, title,editText.html.toString(),bg_color)
                 }
             }
         }
@@ -121,7 +163,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
                 Log.d("note",editText.html.toString())
                 if (editText.html.toString().isNotEmpty()){
                     Database(this, null).apply {
-                        addNote(id,title,date,editText.html.toString())
+                        addNote(id,title,date,editText.html.toString(),bg_color)
                     }
                 }
 
@@ -150,7 +192,6 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
             super.onBackPressedDispatcher.onBackPressed()
 
     }
-
 
     private fun showFontSizeMenu() {
         val popupMenu = PopupMenu(this, buttonFontSize)

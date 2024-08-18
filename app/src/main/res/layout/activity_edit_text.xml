@@ -40,10 +40,10 @@
             android:layout_weight="1"
             />
         <ImageButton
-            android:id="@+id/copyButton"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/copy_icon"
+            android:id="@+id/bgButton"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/bg_color"
             android:contentDescription="Bold Text"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
@@ -65,19 +65,26 @@
 
     </LinearLayout>
 
-    <jp.wasabeef.richeditor.RichEditor
-        android:id="@+id/editTextNote"
+    <FrameLayout
+        android:id="@+id/frameLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:minHeight="250dp"
+        android:padding="10dp">
 
-        android:textSize="16sp"
-        android:focusable="true"
-        android:focusableInTouchMode="true"
-        android:clickable="true"
+        <jp.wasabeef.richeditor.RichEditor
+            android:id="@+id/editTextNote"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:minHeight="250dp"
+            android:textSize="16sp"
+            android:focusable="true"
+            android:focusableInTouchMode="true"
 
-        />
+
+            android:clickable="true"/>
+    </FrameLayout>
+
 
 
     <LinearLayout
@@ -107,10 +114,11 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="30dp"
-            android:src="@drawable/ic_size_increase"
+            android:src="@drawable/ic_font"
             android:contentDescription="Change Text Size"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
+            android:padding="2dp"
 
 
             />

@@ -18,7 +18,8 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 + ID_COL + " TEXT PRIMARY KEY, "
                 + TITLE_COl + " TEXT,"
                 + DATE_COL + " TEXT,"
-                + NOTE_COL + " TEXT"  +    ")")
+                + NOTE_COL + " TEXT,"
+                + BG_COL + " TEXT" +   ")")
 
 
 
@@ -38,7 +39,7 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     }
 
     // This method is for adding data in our database
-    fun addNote(id: String,title : String, date : String, note : String ){
+    fun addNote(id: String,title : String, date : String, note : String, bg_color:String ){
 
         // below we are creating
         // a content values variable
@@ -50,6 +51,7 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         values.put(TITLE_COl, title)
         values.put(DATE_COL, date)
         values.put(NOTE_COL, note)
+        values.put(BG_COL, bg_color)
 
         // here we are creating a
         // writable variable of
@@ -72,11 +74,12 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     }
 
 
-    fun updateNoteById(id: String, title: String, note: String) {
+    fun updateNoteById(id: String, title: String, note: String,bg_color: String) {
         val db = this.writableDatabase
         val values = ContentValues().apply {
             put("title", title)
             put("note", note)
+            put("bg_color", bg_color)
         }
         db.update("notes", values, "id = ?", arrayOf(id.toString()))
     }
@@ -97,7 +100,17 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         return db.rawQuery("SELECT * FROM " + TABLE_NAME, null)
 
     }
+        fun getColorById(id: String):String{
+            val db = this.readableDatabase
+            val cursor = db.rawQuery("SELECT $BG_COL FROM $TABLE_NAME WHERE $ID_COL = ?", arrayOf(id))
+            var color = ""
+            if (cursor.moveToFirst()) {
+                color = cursor.getString(cursor.getColumnIndexOrThrow(BG_COL))
+            }
+            cursor.close()
+            return color
 
+        }
     companion object{
         // here we have defined variables for our database
 
@@ -116,5 +129,6 @@ class Database(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val TITLE_COl = "title"
         val DATE_COL = "date"
         val NOTE_COL="note"
+        val BG_COL="bg_color"
     }
 }
