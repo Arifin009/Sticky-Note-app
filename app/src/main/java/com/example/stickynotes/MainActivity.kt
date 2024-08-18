@@ -1,11 +1,18 @@
 package com.example.stickynotes
 
 
+import MyAdapter
 import android.app.Activity
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Color
 
 import android.os.Bundle
+import android.text.TextWatcher
+import android.widget.ImageButton
+import android.widget.RadioButton
+import android.widget.SearchView
+import android.widget.Switch
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,15 +20,19 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
+import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.onNavDestinationSelected
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stickynotes.databinding.ActivityMainBinding
-import com.example.yourapp.MyAdapter
+
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.navigation.NavigationView
 
@@ -48,13 +59,34 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        CheckDarkMode()
+        handleDarkMode()
         setupUI()
         setupFab()
         loadData()
         getTextResult()
         setupRecyclerView()
+        setupSearchView()
 
     }
+
+    private fun CheckDarkMode() {
+        setSupportActionBar(binding.appBarMain.toolbar)
+        val navView: NavigationView = binding.navView
+        val menuItem = navView.menu.findItem(R.id.nav_radios)
+        val switchButton = menuItem.actionView?.findViewById<Switch>(R.id.switch_toggle)
+        val sharedPreferences = getSharedPreferences("Setting", MODE_PRIVATE)
+
+        if (sharedPreferences.getBoolean("isDarkMode", false))
+        {
+            if (switchButton != null) {
+                switchButton.setChecked(true)
+            }
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+            delegate.applyDayNight()
+        }
+    }
+
     private fun setupFab() {
         fab = findViewById(R.id.fab)
         fab.setOnClickListener {
@@ -70,9 +102,9 @@ class MainActivity : AppCompatActivity() {
         val navView: NavigationView = binding.navView
         val navController = findNavController(R.id.nav_host_fragment_content_main)
 
-        // Set up AppBarConfiguration with drawer layout
         appBarConfiguration = AppBarConfiguration(
             setOf(R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow), drawerLayout
+
         )
 
         // Set up ActionBar with NavController
@@ -92,6 +124,30 @@ class MainActivity : AppCompatActivity() {
 
         // Sync the toggle state
         toggle.syncState()
+        // Access the RadioButton directly and set up listener
+
+    }
+    fun handleDarkMode()
+    {
+        setSupportActionBar(binding.appBarMain.toolbar)
+        val navView: NavigationView = binding.navView
+        val menuItem = navView.menu.findItem(R.id.nav_radios)
+        val switchButton = menuItem.actionView?.findViewById<Switch>(R.id.switch_toggle)
+        val SharedPreferences = getSharedPreferences("Setting", MODE_PRIVATE)
+        switchButton?.setOnClickListener {
+            if (switchButton.isChecked) {
+                // Handle radio button checked state
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+                delegate.applyDayNight()
+                SharedPreferences.edit().putBoolean("isDarkMode", true).apply()
+
+
+            } else {
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+                delegate.applyDayNight()
+                SharedPreferences.edit().putBoolean("isDarkMode", false).apply()
+            }
+        }
     }
 
 private fun getTextResult()
@@ -167,6 +223,23 @@ private fun getTextResult()
         // Notify the adapter of data changes
         myAdapter.notifyDataSetChanged()
     }
+    private fun setupSearchView() {
+        val searchView: androidx.appcompat.widget.SearchView = findViewById(R.id.searchView)
+
+        searchView.setOnQueryTextListener(object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                // Optional: Handle the search action when the user submits the query
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                // Filter the list as the user types in the search box
+                myAdapter.filter(newText.orEmpty())
+                return true
+            }
+        })
+    }
+
 
 
 

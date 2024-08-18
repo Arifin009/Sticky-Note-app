@@ -1,22 +1,22 @@
-<RadioGroup android:layout_width="wrap_content"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:gravity="center_vertical">
 
-    <RadioButton
-        android:id="@+id/light"
+    <TextView
+        android:id="@+id/switch_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Light"
+        android:text="Dark Mode"
+        android:textAppearance="?attr/textAppearanceListItem"
+        android:layout_weight="1" />
 
-        />
-
-    <RadioButton
-        android:id="@+id/dark"
+    <Switch
+        android:id="@+id/switch_toggle"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Dark"
+        android:layout_height="wrap_content" />
 
-       />
-</RadioGroup>
+</LinearLayout>

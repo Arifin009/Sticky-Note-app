@@ -1,12 +1,16 @@
 package com.example.stickynotes.ui.home
 
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.example.stickynotes.R
 import com.example.stickynotes.databinding.FragmentHomeBinding
 
 class HomeFragment : Fragment() {
@@ -32,7 +36,17 @@ class HomeFragment : Fragment() {
         homeViewModel.text.observe(viewLifecycleOwner) {
             textView.text = it
         }
+        // Access the root layout of the fragment
+
+
+        // Check the current mode and set background color
+        val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+
+        if (isDarkMode) {
+            root.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.black)) // Set to dark color
+        }
         return root
+
     }
 
     override fun onDestroyView() {

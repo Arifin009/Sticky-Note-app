@@ -3,6 +3,7 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -27,7 +28,7 @@ import java.util.UUID
 class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
 
     private lateinit var editText: RichEditor
-    private lateinit var buttonFontSize: ImageButton
+
     private lateinit var frameLayout: FrameLayout
 
 
@@ -46,10 +47,10 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
            intent.getStringExtra("id")?.let { getColorById(it) }
            ?.let { applyColor(it.toInt()) }
        }
+//        val imageButton=  findViewById<ImageButton>(R.id.boldButton)
+//        imageButton.setColorFilter(ContextCompat.getColor(this, R.color.white))
 
-//        if (color != null) {
-//            applyColor(color.toInt())
-//        }
+handaleDarkMode()
 
         editText.setPlaceholder("type here....")
         editText.setPadding(30, 30, 30, 30)
@@ -62,14 +63,8 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { editText.setItalic() }
         findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo() }
         findViewById<ImageButton>(R.id.bgButton).setOnClickListener { showColorPicker(0) }
-//        findViewById<ImageButton>(R.id.cutButton).setOnClickListener { cutText() }
-
-
-        buttonFontSize = findViewById<ImageButton>(R.id.textSizeInc)
-        buttonFontSize.setOnClickListener {
-            showFontSizeMenu()
-        }
-       findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
+        findViewById<ImageButton>(R.id.textSizeInc).setOnClickListener { showFontSizeMenu() }
+        findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
 
@@ -84,6 +79,18 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
             finish()
                    }
 
+
+
+    }
+
+    private fun handaleDarkMode() {
+        val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        if (isDarkMode){
+            findViewById<ImageButton>(R.id.boldButton).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.unnderlineBtn).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.italicBtn).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.textSizeInc).setColorFilter(ContextCompat.getColor(this, R.color.white))
+        }
 
 
     }
@@ -194,7 +201,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
     }
 
     private fun showFontSizeMenu() {
-        val popupMenu = PopupMenu(this, buttonFontSize)
+        val popupMenu = PopupMenu(this, findViewById<ImageButton>(R.id.textSizeInc))
         val menuInflater: MenuInflater = popupMenu.menuInflater
         menuInflater.inflate(R.menu.font_size_menu, popupMenu.menu)
 
