@@ -19,6 +19,7 @@ import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import jp.wasabeef.richeditor.RichEditor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.Stack
 import java.util.UUID
 
 class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
@@ -26,10 +27,12 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
     private lateinit var editText: RichEditor
 
     private lateinit var frameLayout: FrameLayout
+    private  val colorStake=Stack<Int>()
 
 
     private  val DEFAULT_COLOR = android.graphics.Color.WHITE
     private lateinit var bg_color: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.statusBarColor = Color.TRANSPARENT
@@ -43,6 +46,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
            intent.getStringExtra("id")?.let { getColorById(it) }
            ?.let { applyColor(it.toInt())
            bg_color=it
+
            }
        }
 
@@ -58,7 +62,23 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         findViewById<ImageButton>(R.id.boldButton).setOnClickListener { editText.setBold() }
         findViewById<ImageButton>(R.id.unnderlineBtn).setOnClickListener { editText.setUnderline() }
         findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { editText.setItalic() }
-        findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo() }
+        findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo()
+
+            if (colorStake.count() > 1) {
+                var lastColor = colorStake.pop()
+                // Pop once and store the value
+                editText.setBackgroundColor(lastColor)
+                val gradientDrawable = GradientDrawable()
+                gradientDrawable.shape = GradientDrawable.RECTANGLE
+                gradientDrawable.setColor(lastColor)
+                gradientDrawable.cornerRadius = 20f
+                frameLayout.background = gradientDrawable
+                bg_color = lastColor.toString()
+                Log.d("color", lastColor.toString())  // Use the stored value for logging
+            }
+
+
+        }
         findViewById<ImageButton>(R.id.bgButton).setOnClickListener { showColorPicker(0) }
         findViewById<ImageButton>(R.id.textSizeInc).setOnClickListener { showFontSizeMenu() }
         findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
@@ -103,6 +123,9 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
     }
 
     private fun applyColor(color: Int) {
+        if (colorStake.isEmpty() || colorStake.peek() != color) {
+            colorStake.push(bg_color.toInt())
+        }
         editText.setBackgroundColor(color)
 
         val gradientDrawable = GradientDrawable()
@@ -111,6 +134,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         gradientDrawable.cornerRadius = 20f // Set the corner radius
 //            gradientDrawable.setStroke(2, Color.BLACK)
         frameLayout.background = gradientDrawable
+
     }
 
     private fun showColorPicker(dialogId: Int) {
@@ -131,6 +155,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         }
         else if (dialogId==0)
         {
+
             applyColor(color)
             bg_color=color.toString()
 
