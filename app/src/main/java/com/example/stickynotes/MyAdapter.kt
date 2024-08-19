@@ -1,7 +1,9 @@
+
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.stickynotes.R
 
@@ -10,6 +12,7 @@ class MyAdapter(
     val titles: MutableList<String>,
     val subtitles: MutableList<String>,
     val notes: MutableList<String>,
+    val colors: MutableList<String>,
     private val onItemClick: (Int) -> Unit,
     private val onItemLongClick: (Int) -> Unit,
 ) : RecyclerView.Adapter<MyAdapter.MyViewHolder>() {
@@ -46,20 +49,35 @@ class MyAdapter(
         return MyViewHolder(itemView)
     }
 
+
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
         holder.titleTextView.text = titles[position]
         holder.subtitleTextView.text = subtitles[position]
+
+        // Get the drawable background
+        val drawable = holder.itemView.context.getDrawable(R.drawable.custom_edittext_background)
+
+        // Wrap the drawable using DrawableCompat
+        val wrappedDrawable = DrawableCompat.wrap(drawable!!)
+
+        // Apply the color using DrawableCompat
+        DrawableCompat.setTint(wrappedDrawable, colors[position].toInt())
+
+        // Set the modified drawable as background
+        holder.itemView.background = wrappedDrawable
     }
+
 
     override fun getItemCount(): Int {
         return titles.size
     }
 
-    fun addItem(id: String, title: String, subtitle: String, note: String) {
+    fun addItem(id: String, title: String, subtitle: String, note: String, color: String) {
         ids.add(id)
         titles.add(title)
         subtitles.add(subtitle)
         notes.add(note)
+        colors.add(color)
 
         originalIds.add(id)
         originalTitles.add(title)
@@ -90,6 +108,7 @@ class MyAdapter(
             titles.removeAt(position)
             subtitles.removeAt(position)
             notes.removeAt(position)
+            colors.removeAt(position)
 
             // Update the filtered lists
             val filteredIndex = filteredIds.indexOf(itemId)

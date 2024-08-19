@@ -52,15 +52,15 @@
             />
 
         <ImageButton
-            android:id="@+id/cutButton"
+            android:id="@+id/addImageButton"
             android:layout_width="30dp"
             android:layout_height="30dp"
-            android:src="@drawable/cut_icon"
+            android:src="@drawable/text_pic"
             android:contentDescription="Change Text Size"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
-            android:padding="1.5dp"
+
             android:layout_weight="1"/>
 
     </LinearLayout>
@@ -152,17 +152,6 @@
 
             android:src="@drawable/italic_icon" />
 
-<!--        <ImageButton-->
-<!--            android:id="@+id/itaicBtn"-->
-<!--            android:layout_width="30dp"-->
-<!--            android:layout_height="30dp"-->
-<!--            android:layout_marginHorizontal="20dp"-->
-<!--            android:background="?attr/selectableItemBackgroundBorderless"-->
-<!--            android:contentDescription="Change Text Color"-->
-<!--            android:padding="4dp"-->
-<!--            android:scaleType="fitCenter"-->
-
-<!--            android:src="@drawable/italic_icon" />-->
 
         <ImageButton
             android:id="@+id/colorButton"
@@ -173,6 +162,44 @@
             android:scaleType="fitCenter"
             android:padding="2dp"
             android:src="@drawable/ic_color" />
+        <ImageButton
+            android:id="@+id/highlightButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/text_highlight" />
+
+
+        <ImageButton
+            android:id="@+id/align_left"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/align_left" />
+        <ImageButton
+            android:id="@+id/align_middle"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/align_middle" />
+        <ImageButton
+            android:id="@+id/align_right"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/align_right" />
 
     </LinearLayout>
 </HorizontalScrollView>

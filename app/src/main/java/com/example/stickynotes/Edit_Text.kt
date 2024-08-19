@@ -1,8 +1,7 @@
 package com.example.stickynotes
+
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -10,8 +9,6 @@ import android.os.Bundle
 import android.text.Html
 import android.util.Log
 import android.view.MenuInflater
-import android.view.View
-import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.PopupMenu
@@ -19,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
-
 import jp.wasabeef.richeditor.RichEditor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -45,12 +41,13 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         bg_color=DEFAULT_COLOR.toString()
        Database(this,null).apply{
            intent.getStringExtra("id")?.let { getColorById(it) }
-           ?.let { applyColor(it.toInt()) }
+           ?.let { applyColor(it.toInt())
+           bg_color=it
+           }
        }
-//        val imageButton=  findViewById<ImageButton>(R.id.boldButton)
-//        imageButton.setColorFilter(ContextCompat.getColor(this, R.color.white))
 
-handaleDarkMode()
+
+        handaleDarkMode()
 
         editText.setPlaceholder("type here....")
         editText.setPadding(30, 30, 30, 30)
@@ -65,6 +62,10 @@ handaleDarkMode()
         findViewById<ImageButton>(R.id.bgButton).setOnClickListener { showColorPicker(0) }
         findViewById<ImageButton>(R.id.textSizeInc).setOnClickListener { showFontSizeMenu() }
         findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
+        findViewById<ImageButton>(R.id.highlightButton).setOnClickListener { showColorPicker(2) }
+        findViewById<ImageButton>(R.id.align_left).setOnClickListener { editText.setAlignLeft() }
+        findViewById<ImageButton>(R.id.align_middle).setOnClickListener { editText.setAlignCenter() }
+        findViewById<ImageButton>(R.id.align_right).setOnClickListener { editText.setAlignRight() }
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
 
@@ -78,10 +79,16 @@ handaleDarkMode()
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
                    }
-
+//        findViewById<ImageButton>(R.id.addImageButton).setOnClickListener {
+//
+//
+//            launchImagePicker()
+//        }
 
 
     }
+
+
 
     private fun handaleDarkMode() {
         val isDarkMode = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
@@ -122,18 +129,26 @@ handaleDarkMode()
             editText.setTextColor(color)
 
         }
-        else
+        else if (dialogId==0)
         {
             applyColor(color)
             bg_color=color.toString()
 
         }
+        else if (dialogId==2)
+        {
+            editText.setTextBackgroundColor(color)
+        }
 
     }
+
 
     override fun onDialogDismissed(dialogId: Int) {
 
     }
+
+
+
 
 
     private fun updateToDatabase() {
