@@ -1,22 +1,38 @@
 package com.example.stickynotes
 
 import android.app.Activity
+import android.content.ContentResolver
 import android.content.Intent
 import android.content.res.Configuration
+import android.database.Cursor
+import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
+import android.provider.MediaStore
 import android.text.Html
+import android.util.Base64
 import android.util.Log
 import android.view.MenuInflater
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
+import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.PopupMenu
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.jaredrummler.android.colorpicker.ColorPickerDialog
 import com.jaredrummler.android.colorpicker.ColorPickerDialogListener
 import jp.wasabeef.richeditor.RichEditor
+import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Stack
@@ -27,11 +43,15 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
     private lateinit var editText: RichEditor
 
     private lateinit var frameLayout: FrameLayout
-    private  val colorStake=Stack<Int>()
+    private lateinit var imgFrame: LinearLayout
+    private val undoStack = Stack<Int>()
+    private val redoStack = Stack<Int>()
 
 
     private  val DEFAULT_COLOR = android.graphics.Color.WHITE
     private lateinit var bg_color: String
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,11 +61,13 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         supportActionBar?.hide()
         editText=findViewById(R.id.editTextNote)
         frameLayout = findViewById<FrameLayout>(R.id.frameLayout)
+        imgFrame = findViewById<LinearLayout>(R.id.imgthem)
         bg_color=DEFAULT_COLOR.toString()
-       Database(this,null).apply{
+        Database(this,null).apply{
            intent.getStringExtra("id")?.let { getColorById(it) }
            ?.let { applyColor(it.toInt())
            bg_color=it
+
 
            }
        }
@@ -62,23 +84,6 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         findViewById<ImageButton>(R.id.boldButton).setOnClickListener { editText.setBold() }
         findViewById<ImageButton>(R.id.unnderlineBtn).setOnClickListener { editText.setUnderline() }
         findViewById<ImageButton>(R.id.italicBtn).setOnClickListener { editText.setItalic() }
-        findViewById<ImageButton>(R.id.undoButton).setOnClickListener { editText.undo()
-
-            if (colorStake.count() > 1) {
-                var lastColor = colorStake.pop()
-                // Pop once and store the value
-                editText.setBackgroundColor(lastColor)
-                val gradientDrawable = GradientDrawable()
-                gradientDrawable.shape = GradientDrawable.RECTANGLE
-                gradientDrawable.setColor(lastColor)
-                gradientDrawable.cornerRadius = 20f
-                frameLayout.background = gradientDrawable
-                bg_color = lastColor.toString()
-                Log.d("color", lastColor.toString())  // Use the stored value for logging
-            }
-
-
-        }
         findViewById<ImageButton>(R.id.bgButton).setOnClickListener { showColorPicker(0) }
         findViewById<ImageButton>(R.id.textSizeInc).setOnClickListener { showFontSizeMenu() }
         findViewById<ImageButton>(R.id.colorButton).setOnClickListener { showColorPicker(1) }
@@ -86,6 +91,40 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         findViewById<ImageButton>(R.id.align_left).setOnClickListener { editText.setAlignLeft() }
         findViewById<ImageButton>(R.id.align_middle).setOnClickListener { editText.setAlignCenter() }
         findViewById<ImageButton>(R.id.align_right).setOnClickListener { editText.setAlignRight() }
+        findViewById<ImageButton>(R.id.order_list).setOnClickListener {editText.setNumbers() }
+        findViewById<ImageButton>(R.id.unorder_list).setOnClickListener { editText.setBullets()  }
+
+        findViewById<ImageButton>(R.id.redoButton).setOnClickListener {
+            editText.redo()
+
+            if (redoStack.isNotEmpty()) {
+                // Store the current background color before changing
+                if (undoStack.isEmpty() || undoStack.peek() != bg_color.toInt()) {
+                    undoStack.push(bg_color.toInt())
+                }
+
+                val lastColor = redoStack.pop()
+                applyColor(lastColor)
+                bg_color = lastColor.toString()
+            }
+        }
+
+        findViewById<ImageButton>(R.id.undoButton).setOnClickListener {
+            editText.undo()
+            if (undoStack.isNotEmpty()) {
+                // Store the current background color before changing
+                if (redoStack.isEmpty() || redoStack.peek() != bg_color.toInt()) {
+                    redoStack.push(bg_color.toInt())
+                }
+
+                val lastColor = undoStack.pop()
+                applyColor(lastColor)
+                bg_color = lastColor.toString()
+            }
+        }
+
+
+
 
         findViewById<ImageButton>(R.id.backButton).setOnClickListener {
 
@@ -99,11 +138,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
                    }
-//        findViewById<ImageButton>(R.id.addImageButton).setOnClickListener {
-//
-//
-//            launchImagePicker()
-//        }
+
 
 
     }
@@ -117,15 +152,20 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
             findViewById<ImageButton>(R.id.unnderlineBtn).setColorFilter(ContextCompat.getColor(this, R.color.white))
             findViewById<ImageButton>(R.id.italicBtn).setColorFilter(ContextCompat.getColor(this, R.color.white))
             findViewById<ImageButton>(R.id.textSizeInc).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.highlightButton).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.align_left).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.align_middle).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.align_right).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.order_list).setColorFilter(ContextCompat.getColor(this, R.color.white))
+            findViewById<ImageButton>(R.id.unorder_list).setColorFilter(ContextCompat.getColor(this, R.color.white))
+
         }
 
 
     }
 
     private fun applyColor(color: Int) {
-        if (colorStake.isEmpty() || colorStake.peek() != color) {
-            colorStake.push(bg_color.toInt())
-        }
+
         editText.setBackgroundColor(color)
 
         val gradientDrawable = GradientDrawable()
@@ -134,6 +174,7 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         gradientDrawable.cornerRadius = 20f // Set the corner radius
 //            gradientDrawable.setStroke(2, Color.BLACK)
         frameLayout.background = gradientDrawable
+        bg_color=color.toString()
 
     }
 
@@ -155,9 +196,12 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
         }
         else if (dialogId==0)
         {
-
+            if (undoStack.isEmpty() || undoStack.peek() != color) {
+                undoStack.push(bg_color.toInt())
+            }
             applyColor(color)
-            bg_color=color.toString()
+
+
 
         }
         else if (dialogId==2)
@@ -216,16 +260,15 @@ class Edit_Text : AppCompatActivity(),ColorPickerDialogListener {
 
             }
     fun extractTitle(userInput: String): String {
-        val sp = userInput.split(" ").filter { it.isNotEmpty() }
+        val sp = userInput.trim().split("\\s+".toRegex())
 
-        val title = when {
-            sp.size >= 3 -> sp[0] + " " + sp[1] + " " + sp[2]
-            sp.size == 2 -> sp[0] + " " + sp[1]
+        return when {
+            sp.size >= 2 -> "${sp[0]} ${sp[1]}"
             sp.isNotEmpty() -> sp[0]
             else -> "No title"
         }
-        return title
     }
+
 
     override fun onBackPressed() {
 

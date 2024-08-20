@@ -1,5 +1,6 @@
 <!-- res/layout/custom_edittext_dialog.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/imgthem"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -37,31 +38,32 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
-            android:layout_weight="1"
+            android:layout_weight="0.3"
+            />
+        <ImageButton
+            android:id="@+id/redoButton"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/redo_icon"
+
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:layout_margin="10dp"
+            android:layout_weight="0.3"
             />
         <ImageButton
             android:id="@+id/bgButton"
             android:layout_width="35dp"
             android:layout_height="35dp"
             android:src="@drawable/bg_color"
-            android:contentDescription="Bold Text"
+
             android:background="?attr/selectableItemBackgroundBorderless"
             android:scaleType="fitCenter"
             android:layout_margin="10dp"
             android:layout_weight="1"
             />
 
-        <ImageButton
-            android:id="@+id/addImageButton"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:src="@drawable/text_pic"
-            android:contentDescription="Change Text Size"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:scaleType="fitCenter"
-            android:layout_margin="10dp"
 
-            android:layout_weight="1"/>
 
     </LinearLayout>
 
@@ -83,6 +85,7 @@
 
 
             android:clickable="true"/>
+
     </FrameLayout>
 
 
@@ -109,7 +112,7 @@
             android:layout_height="32dp"
             android:layout_marginHorizontal="20dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Bold Text"
+
 
             android:scaleType="fitCenter"
 
@@ -200,6 +203,24 @@
             android:scaleType="fitCenter"
             android:padding="2dp"
             android:src="@drawable/align_right" />
+        <ImageButton
+            android:id="@+id/order_list"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/order_list" />
+        <ImageButton
+            android:id="@+id/unorder_list"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginHorizontal="20dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:scaleType="fitCenter"
+            android:padding="2dp"
+            android:src="@drawable/unorder_list" />
 
     </LinearLayout>
 </HorizontalScrollView>
